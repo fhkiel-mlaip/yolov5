@@ -203,7 +203,9 @@ def plot_images(images, targets, paths=None, fname='images.jpg', names=None, max
             break
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin
         im = im.transpose(1, 2, 0)
-        mosaic[y:y + h, x:x + w, :] = im[:, :, :3]
+        depthValues = im[:, :, 0] / (255 * 2) + 0.5
+        depthValues = np.stack((depthValues, depthValues, depthValues), axis=2)
+        mosaic[y:y + h, x:x + w, :] = np.multiply(im[:, :, 1:4], depthValues)
 
     # Resize (optional)
     scale = max_size / ns / max(h, w)
