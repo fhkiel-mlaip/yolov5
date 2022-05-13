@@ -235,7 +235,7 @@ class LoadImages:
         else:
             # Read image
             self.count += 1
-            img0 = cv2.imread(path, -1)  # BGR
+            img0 = cv2.imread(path, -1)  # BGRA
             assert img0 is not None, f'Image Not Found {path}'
             s = f'image {self.count}/{self.nf} {path}: '
 
@@ -243,7 +243,7 @@ class LoadImages:
         img = letterbox(img0, self.img_size, stride=self.stride, auto=self.auto)[0]
 
         # Convert
-        img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
+        img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGRA to ARGB
         img = np.ascontiguousarray(img)
 
         return path, img, img0, self.cap, s

@@ -67,8 +67,23 @@ def check_pil_font(font=FONT, size=10):
 
 class Annotator:
     # YOLOv5 Annotator for train/val mosaics and jpgs and detect/hub inference annotations
+    # im channel order:
+    #   BGRA if pil == False
+    #   ARGB if pil == True
     def __init__(self, im, line_width=None, font_size=None, font='Arial.ttf', pil=False, example='abc'):
         assert im.data.contiguous, 'Image not contiguous. Apply np.ascontiguousarray(im) to Annotator() input images.'
+
+        originalType = im.dtype
+
+        if pil:
+            depthValues = im[:, :, 0] / (255 * 2) + 0.5
+            depthValues = np.stack((depthValues, depthValues, depthValues), axis=2)
+            im = np.multiply(im[:, :, 1:], depthValues).astype(originalType)
+        else:
+            depthValues = im[:, :, 3] / (255 * 2) + 0.5
+            depthValues = np.stack((depthValues, depthValues, depthValues), axis=2)
+            im = np.multiply(im[:, :, :3], depthValues).astype(originalType)
+
         non_ascii = not is_ascii(example)  # non-latin labels, i.e. asian, arabic, cyrillic
         self.pil = pil or non_ascii
         if self.pil:  # use PIL
@@ -197,15 +212,12 @@ def plot_images(images, targets, paths=None, fname='images.jpg', names=None, max
     ns = np.ceil(bs ** 0.5)  # number of subplots (square)
 
     # Build Image
-    mosaic = np.full((int(ns * h), int(ns * w), 3), 255, dtype=np.uint8)  # init
+    mosaic = np.full((int(ns * h), int(ns * w), 4), 255, dtype=np.uint8)  # init
     for i, im in enumerate(images):
         if i == max_subplots:  # if last batch has fewer images than we expect
             break
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin
-        im = im.transpose(1, 2, 0)
-        depthValues = im[:, :, 0] / (255 * 2) + 0.5
-        depthValues = np.stack((depthValues, depthValues, depthValues), axis=2)
-        mosaic[y:y + h, x:x + w, :] = np.multiply(im[:, :, 1:4], depthValues)
+        mosaic[y:y + h, x:x + w, :] = im.transpose(1, 2, 0)
 
     # Resize (optional)
     scale = max_size / ns / max(h, w)
