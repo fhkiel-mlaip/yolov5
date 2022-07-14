@@ -16,30 +16,22 @@ from utils.metrics import bbox_ioa
 class Albumentations:
     # YOLOv5 Albumentations class (optional, only used if package is installed)
     def __init__(self):
-        self.transform1 = None
-        self.transformSpecial = None
-        self.transform2 = None
+        self.transform = None
         try:
             import albumentations as A
             check_version(A.__version__, '1.0.3', hard=True)  # version requirement
 
-            T1 = [
+            T = [
                 A.Blur(p=0.01),
                 A.MedianBlur(p=0.01),
-            ]
-            TSpecial = [
                 A.ToGray(p=0.01),
                 A.CLAHE(p=0.01),
-            ]
-            T2 = [
                 A.RandomBrightnessContrast(p=0.0),
                 A.RandomGamma(p=0.0),
                 A.ImageCompression(quality_lower=75, p=0.0),
             ]
 
-            self.transform1 = A.Compose(T1, bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels']))
-            self.transformSpecial = A.Compose(TSpecial, bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels']))
-            self.transform2 = A.Compose(T2, bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels']))
+            self.transform = A.Compose(T, bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels']))
 
             LOGGER.info(colorstr('albumentations: ') + ', '.join(f'{x}' for x in self.transform.transforms if x.p))
         except ImportError:  # package not installed, skip
@@ -48,21 +40,9 @@ class Albumentations:
             LOGGER.info(colorstr('albumentations: ') + f'{e}')
 
     def __call__(self, im, labels, p=1.0):
-        if self.transform1 and random.random() < p:
-            new = self.transform1(image=im, bboxes=labels[:, 1:], class_labels=labels[:, 0])  # transformed
-            im = new['image']
-            tempLabels = np.array([[c, *b] for c, b in zip(new['class_labels'], new['bboxes'])])
-            if tempLabels.shape == labels.shape:
-                labels = tempLabels
-
-            new = self.transformSpecial(image=im[:, :, :3], bboxes=labels[:, 1:], class_labels=labels[:, 0])  # transformed
+        if self.transform and random.random() < p:
+            new = self.transform(image=im[:, :, :3], bboxes=labels[:, 1:], class_labels=labels[:, 0])  # transformed
             im[:, :, :3] = new['image']
-            tempLabels = np.array([[c, *b] for c, b in zip(new['class_labels'], new['bboxes'])])
-            if tempLabels.shape == labels.shape:
-                labels = tempLabels
-
-            new = self.transform2(image=im, bboxes=labels[:, 1:], class_labels=labels[:, 0])  # transformed
-            im = new['image']
             tempLabels = np.array([[c, *b] for c, b in zip(new['class_labels'], new['bboxes'])])
             if tempLabels.shape == labels.shape:
                 labels = tempLabels
