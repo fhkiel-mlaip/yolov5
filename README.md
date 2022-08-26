@@ -16,6 +16,9 @@
 
 <br>
 <p>
+ATTENTION: This repository extends YOLOv5 to support 4-channel images (RGBA). While this provides the technical solution, it did not prove useful for 2D object detection on fused camera and depth images (RGBD) stemming from camera and LiDAR. As such in its current state it only supports four channel inputs.
+</p>
+<p>
 YOLOv5 🚀 is a family of object detection architectures and models pretrained on the COCO dataset, and represents <a href="https://ultralytics.com">Ultralytics</a>
  open-source research into future vision AI methods, incorporating lessons learned and best practices evolved over thousands of hours of research and development.
 </p>

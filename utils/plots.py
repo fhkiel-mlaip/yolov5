@@ -75,6 +75,7 @@ class Annotator:
 
         originalType = im.dtype
 
+        # Visualise the RGBA image using only RGB
         if pil:
             depthValues = im[:, :, 0] / (255 * 2) + 0.5
             depthValues = np.stack((depthValues, depthValues, depthValues), axis=2)
